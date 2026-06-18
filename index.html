@@ -75,7 +75,6 @@
   .b-red    { background:#2d1010; color:#f85149; border:1px solid #8b3131; }
   .b-type   { background:#1f2535; color:#79c0ff; border:1px solid #1f6feb; }
   .b-live   { background:#1a2d1a; color:#3fb950; border:1px solid #238636; }
-  .b-sched  { background:#1f2020; color:#8b949e; border:1px dashed #444; }
   .b-warn   { background:#2d1f10; color:#f0883e; border:1px solid #bd561d; }
 
   /* ── Stop list ── */
@@ -100,7 +99,6 @@
   .leg-title { font-weight:600; color:#8b949e; margin-bottom:5px; text-transform:uppercase; letter-spacing:.06em; font-size:10px; }
   .leg-row { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
   .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.15); }
-  .dot-sched { width:11px; height:11px; border-radius:50%; flex-shrink:0; border:2px dashed #3fb950; background:#3fb95033; }
 
   /* ── Status bar ── */
   #status {
@@ -124,11 +122,6 @@
   .train-tooltip::before { display:none !important; }
   .leaflet-popup-content-wrapper { background:#161b22; border:1px solid #30363d; border-radius:8px; color:#e6edf3; box-shadow:0 8px 24px rgba(0,0,0,.5); }
   .leaflet-popup-tip { background:#161b22; }
-
-  @keyframes pulse {
-    0%,100% { box-shadow:0 0 5px #56d36444; }
-    50%      { box-shadow:0 0 14px #56d364cc; }
-  }
 </style>
 </head>
 <body>
@@ -150,12 +143,11 @@
         <h1>Europe Live Trains</h1>
         <span id="clock"></span>
       </div>
-      <div class="subtitle">Live · ÖBB HAFAS · Pan-European rail network</div>
+      <div class="subtitle">Live GPS only · ÖBB HAFAS · Pan-European rail network</div>
     </div>
     <div class="divider"></div>
     <div id="stats">
-      <div class="stat"><span class="stat-val" id="s-total"  style="color:#58a6ff">—</span><span class="stat-label">Trains</span></div>
-      <div class="stat"><span class="stat-val" id="s-live"   style="color:#3fb950">—</span><span class="stat-label">Live GPS</span></div>
+      <div class="stat"><span class="stat-val" id="s-total"  style="color:#58a6ff">—</span><span class="stat-label">Live trains</span></div>
       <div class="stat"><span class="stat-val" id="s-ontime" style="color:#3fb950">—</span><span class="stat-label">On time</span></div>
       <div class="stat"><span class="stat-val" id="s-delayed" style="color:#d29922">—</span><span class="stat-label">Delayed</span></div>
       <div class="stat"><span class="stat-val" id="s-late"   style="color:#f85149">—</span><span class="stat-label">Very late</span></div>
@@ -198,7 +190,6 @@
       <div id="i-badges"></div>
       <div id="i-stops-wrap" style="display:none;margin-top:10px;border-top:1px solid #21262d;padding-top:8px;">
         <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">All stops</div>
-        <div id="i-data-note" style="display:none;font-size:10px;color:#d29922;background:#2d2110;border:1px solid #594a1a;border-radius:4px;padding:5px 7px;margin-bottom:6px;line-height:1.4;">⏱ Scheduled times only — live tracking unavailable for this train</div>
         <div id="i-stops-loading" style="font-size:11px;color:#8b949e;">Loading…</div>
         <div id="i-stops" style="max-height:240px;overflow-y:auto;font-size:11px;"></div>
       </div>
@@ -210,10 +201,7 @@
       <div class="leg-row"><div class="dot" style="background:#3fb950;border-color:#238636"></div> On time (&lt;5 min)</div>
       <div class="leg-row"><div class="dot" style="background:#d29922;border-color:#9e6a03"></div> Delayed (5–29 min)</div>
       <div class="leg-row"><div class="dot" style="background:#f85149;border-color:#8b3131"></div> Very late (≥30 min)</div>
-      <div style="margin-top:7px" class="leg-title">Tracking</div>
-      <div class="leg-row"><div class="dot" style="background:#3fb950;border-color:#238636"></div> Live GPS position</div>
-      <div class="leg-row"><div class="dot-sched"></div> Scheduled only (estimated)</div>
-      <div style="margin-top:6px;font-size:10px;color:#8b949e">Click any train for details + stops</div>
+      <div style="margin-top:6px;font-size:10px;color:#8b949e">All positions are live GPS · Click for stops</div>
     </div>
 
     <div id="status">Connecting…</div>
@@ -226,7 +214,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Replace with your worker URL after deploying europe-worker.js
 // e.g. 'https://europe-trains.YOUR-SUBDOMAIN.workers.dev'
-const PROXY = 'https://eurotrainslive.blair-anderson.workers.dev';
+const PROXY = 'https://YOUR-WORKER.workers.dev';
 
 // ─── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', {
@@ -310,9 +298,7 @@ function passesFilter(t) {
 }
 
 // ─── ICON FACTORY ─────────────────────────────────────────────────────────────
-// Three marker styles — same system as Slovak map:
-// - solid dot: live real-time GPS fix
-// - dashed ring: schedule-only (no live tracking available)
+// All trains are live GPS — single solid dot style, sized by train type
 function makeIcon(train) {
   const color = delayColor(train.Meska);
   const large = isLongDistance(train.TypVlaku);
@@ -327,9 +313,7 @@ function makeIcon(train) {
     </g>
   </svg>`;
 
-  const dot = train._isLive
-    ? `<div style="width:${sz}px;height:${sz}px;background:${color};border:2px solid rgba(255,255,255,.35);border-radius:50%;box-shadow:0 0 5px ${color}88;cursor:pointer;"></div>`
-    : `<div style="width:${sz}px;height:${sz}px;background:${color}33;border:2px dashed ${color};border-radius:50%;cursor:pointer;"></div>`;
+  const dot = `<div style="width:${sz}px;height:${sz}px;background:${color};border:2px solid rgba(255,255,255,.35);border-radius:50%;box-shadow:0 0 5px ${color}88;cursor:pointer;"></div>`;
 
   return L.divIcon({
     className: '',
@@ -341,12 +325,11 @@ function makeIcon(train) {
 // ─── RENDER ───────────────────────────────────────────────────────────────────
 function render(trains) {
   const active  = new Set();
-  let total=0, live=0, ontime=0, delayed=0, late=0;
+  let total=0, ontime=0, delayed=0, late=0;
 
-  // Count stats from full dataset (before filter)
+  // Count stats
   trains.forEach(t => {
     total++;
-    if (t._isLive) live++;
     const d = t.Meska || 0;
     if (d < 5) ontime++; else if (d < 30) delayed++; else late++;
   });
@@ -384,7 +367,6 @@ function render(trains) {
   }
 
   document.getElementById('s-total').textContent   = total;
-  document.getElementById('s-live').textContent    = live;
   document.getElementById('s-ontime').textContent  = ontime;
   document.getElementById('s-delayed').textContent = delayed;
   document.getElementById('s-late').textContent    = late;
@@ -406,7 +388,7 @@ async function refresh() {
 
     const ts = new Date().toLocaleTimeString('en-GB');
     const errs = data.tileErrors?.length ? ` · ${data.tileErrors.length} tile(s) failed` : '';
-    setStatus(`${allTrains.length} trains · ${data.trains.filter(t=>t._isLive).length} live · ${ts}${errs}`,
+    setStatus(`${allTrains.length} live trains · ${ts}${errs}`,
       data.tileErrors?.length ? 'warn' : 'ok');
   } catch (e) {
     setStatus(`Error: ${e.message.slice(0, 60)}`, 'err');
@@ -558,8 +540,7 @@ function showInfo(train) {
   delEl.style.color = color;
 
   let b = `<span class="badge b-type">${train.TypVlaku}</span>`;
-  if (train._isLive)  b += `<span class="badge b-live">Live GPS</span>`;
-  else                b += `<span class="badge b-sched">Scheduled only</span>`;
+  b += `<span class="badge b-live">Live GPS</span>`;
   if (train.MeskaColor === 'green')  b += `<span class="badge b-green">On time</span>`;
   if (train.MeskaColor === 'orange') b += `<span class="badge b-orange">+${d} min</span>`;
   if (train.MeskaColor === 'red')    b += `<span class="badge b-red">+${d} min</span>`;
@@ -571,11 +552,9 @@ function showInfo(train) {
   // Async stop list fetch
   const wrap    = document.getElementById('i-stops-wrap');
   const loading = document.getElementById('i-stops-loading');
-  const banner  = document.getElementById('i-data-note');
   wrap.style.display    = 'block';
   loading.style.display = 'block';
   loading.textContent   = 'Loading stops…';
-  banner.style.display  = 'none';
   document.getElementById('i-stops').innerHTML = '';
 
   if (!train._tripId) {
@@ -588,8 +567,6 @@ function showInfo(train) {
       loading.style.display = 'none';
       renderStopList(trip.stopovers || []);
       drawTripRoute(trip.stopovers || [], train.Position);
-
-      banner.style.display = trip.hasLive === false ? 'block' : 'none';
 
       // Enrich route from stop list
       const stops = trip.stopovers || [];
