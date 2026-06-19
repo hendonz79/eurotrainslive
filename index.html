@@ -70,6 +70,7 @@
   .b-red    { background:#2d1010; color:#f85149; border:1px solid #8b3131; }
   .b-type   { background:#1f2535; color:#79c0ff; border:1px solid #1f6feb; }
   .b-live   { background:#1a2d1a; color:#3fb950; border:1px solid #238636; }
+  .b-fi     { background:#1a2535; color:#79c0ff; border:1px solid #1f6feb; }
 
   .stop-row { display:flex; gap:6px; align-items:flex-start; padding:3px 0; border-bottom:1px solid #161b22; }
   .stop-row:last-child { border-bottom:none; }
@@ -91,6 +92,7 @@
   .leg-title { font-weight:600; color:#8b949e; margin-bottom:5px; text-transform:uppercase; letter-spacing:.06em; font-size:10px; }
   .leg-row { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
   .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.15); }
+  .dot-fi { width:11px; height:11px; border-radius:50%; flex-shrink:0; background:#58a6ff; border:2px solid #1f6feb; }
 
   #status {
     position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
@@ -132,14 +134,15 @@
         <h1>Europe Live Trains</h1>
         <span id="clock"></span>
       </div>
-      <div class="subtitle">Live GPS only · ÖBB HAFAS · Pan-European rail network</div>
+      <div class="subtitle">Live GPS · ÖBB HAFAS + Digitraffic Finland · Pan-European rail</div>
     </div>
     <div class="divider"></div>
     <div id="stats">
-      <div class="stat"><span class="stat-val" id="s-total"  style="color:#58a6ff">—</span><span class="stat-label">Live trains</span></div>
-      <div class="stat"><span class="stat-val" id="s-ontime" style="color:#3fb950">—</span><span class="stat-label">On time</span></div>
+      <div class="stat"><span class="stat-val" id="s-total"   style="color:#58a6ff">—</span><span class="stat-label">Live trains</span></div>
+      <div class="stat"><span class="stat-val" id="s-fi"      style="color:#79c0ff">—</span><span class="stat-label">Finland</span></div>
+      <div class="stat"><span class="stat-val" id="s-ontime"  style="color:#3fb950">—</span><span class="stat-label">On time</span></div>
       <div class="stat"><span class="stat-val" id="s-delayed" style="color:#d29922">—</span><span class="stat-label">Delayed</span></div>
-      <div class="stat"><span class="stat-val" id="s-late"   style="color:#f85149">—</span><span class="stat-label">Very late</span></div>
+      <div class="stat"><span class="stat-val" id="s-late"    style="color:#f85149">—</span><span class="stat-label">Very late</span></div>
     </div>
     <button id="refresh-btn" onclick="refresh()">
       <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor">
@@ -151,10 +154,11 @@
 
   <div id="filters">
     <span class="filter-label">Show</span>
-    <button class="filter-btn active" data-filter="all"   onclick="setFilter('all')">All trains</button>
-    <button class="filter-btn"        data-filter="ld"    onclick="setFilter('ld')">Long-distance (EC/IC/RJ/ICE…)</button>
-    <button class="filter-btn"        data-filter="night" onclick="setFilter('night')">Night trains (EN/NJ)</button>
-    <button class="filter-btn"        data-filter="reg"   onclick="setFilter('reg')">Regional only</button>
+    <button class="filter-btn active" data-filter="all"    onclick="setFilter('all')">All trains</button>
+    <button class="filter-btn"        data-filter="ld"     onclick="setFilter('ld')">Long-distance</button>
+    <button class="filter-btn"        data-filter="night"  onclick="setFilter('night')">Night trains (EN/NJ)</button>
+    <button class="filter-btn"        data-filter="reg"    onclick="setFilter('reg')">Regional only</button>
+    <button class="filter-btn"        data-filter="fi"     onclick="setFilter('fi')">Finland only</button>
     <div class="filter-sep"></div>
     <span class="filter-label">Delay</span>
     <button class="filter-btn active" data-filter="delay-all"     onclick="setDelayFilter('all')">All</button>
@@ -183,10 +187,13 @@
     </div>
 
     <div id="legend">
-      <div class="leg-title">Delay</div>
+      <div class="leg-title">Delay (ÖBB trains)</div>
       <div class="leg-row"><div class="dot" style="background:#3fb950;border-color:#238636"></div> On time (&lt;5 min)</div>
       <div class="leg-row"><div class="dot" style="background:#d29922;border-color:#9e6a03"></div> Delayed (5–29 min)</div>
       <div class="leg-row"><div class="dot" style="background:#f85149;border-color:#8b3131"></div> Very late (≥30 min)</div>
+      <div style="margin-top:7px" class="leg-title">Source</div>
+      <div class="leg-row"><div class="dot" style="background:#3fb950;border-color:#238636"></div> ÖBB HAFAS (Europe)</div>
+      <div class="leg-row"><div class="dot-fi"></div> Digitraffic (Finland)</div>
       <div style="margin-top:6px;font-size:10px;color:#8b949e">All positions are live GPS · Click for stops</div>
     </div>
 
@@ -201,7 +208,8 @@ const PROXY = 'https://eurotrainslive.blair-anderson.workers.dev';
 // ── MAP ───────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center:[50.5,15.0], zoom:5, zoomControl:true, preferCanvas:true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19,
+  attribution:'© OpenStreetMap © CARTO · Finland data: Fintraffic/Digitraffic CC BY 4.0',
+  subdomains:'abcd', maxZoom:19,
 }).addTo(map);
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -222,19 +230,20 @@ function setStatus(msg, cls='') {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = cls;
 }
-function delayColor(d) {
-  if (!d || d < 5) return '#3fb950';
-  if (d < 30)      return '#d29922';
+function delayColor(t) {
+  if (t._src === 'digitraffic') return '#58a6ff'; // Finnish trains always blue
+  const d = t.Meska || 0;
+  if (d < 5)  return '#3fb950';
+  if (d < 30) return '#d29922';
   return '#f85149';
 }
 function isLongDistance(type) {
-  return /^(EC|IC|ICE|RJ|RJX|TGV|AVE|Frecciarossa|Frecciargento|Frecciabianca|SC|Ex|EX|EN|NJ|CNL|D\b|ARC|LEO|RGJ|Railjet|Eurostar|Thalys|Lyria)/i.test(type || '');
+  return /^(EC|IC|ICE|RJ|RJX|TGV|AVE|Frecciarossa|Frecciargento|Frecciabianca|SC|EN|NJ|CNL|D\b|ARC|LEO|Railjet|Eurostar|Thalys|Lyria)/i.test(type || '');
 }
-function isNight(type) {
-  return /^(EN|NJ|CNL|Nightjet|Intercités de Nuit)/i.test(type || '');
-}
-function isRegional(type) { return !isLongDistance(type); }
-function trainKey(t) { return t._tripId || `${t.TypVlaku}_${t.CisloVlaku}_${t.Position[0].toFixed(3)}`; }
+function isNight(type)     { return /^(EN|NJ|CNL|Nightjet)/i.test(type || ''); }
+function isRegional(type)  { return !isLongDistance(type); }
+function isFinnish(t)      { return t._src === 'digitraffic'; }
+function trainKey(t)       { return t._tripId || `${t.TypVlaku}_${t.CisloVlaku}_${t.Position[0].toFixed(3)}`; }
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
 function setFilter(f) {
@@ -252,21 +261,29 @@ function setDelayFilter(f) {
   render(allTrains);
 }
 function passesFilter(t) {
-  const type = t.TypVlaku || '';
+  const type  = t.TypVlaku || '';
   const delay = t.Meska || 0;
-  if (activeFilter === 'ld'    && !isLongDistance(type)) return false;
-  if (activeFilter === 'night' && !isNight(type))        return false;
-  if (activeFilter === 'reg'   && !isRegional(type))     return false;
-  if (delayFilter === 'delayed' && delay < 5)  return false;
-  if (delayFilter === 'late'    && delay < 30) return false;
+  const fi    = isFinnish(t);
+
+  if (activeFilter === 'fi'   && !fi)                        return false;
+  if (activeFilter === 'ld'   && fi)                         return false; // FI has own filter
+  if (activeFilter === 'ld'   && !isLongDistance(type))      return false;
+  if (activeFilter === 'night' && (fi || !isNight(type)))    return false;
+  if (activeFilter === 'reg'  && !isRegional(type))          return false;
+
+  // Delay filter doesn't apply to Finnish trains (no inline delay data)
+  if (!fi) {
+    if (delayFilter === 'delayed' && delay < 5)  return false;
+    if (delayFilter === 'late'    && delay < 30) return false;
+  }
   return true;
 }
 
 // ── ICON ──────────────────────────────────────────────────────────────────────
-// All trains are live GPS — solid dot only, sized by type, with direction arrow
 function makeIcon(train) {
-  const color = delayColor(train.Meska);
-  const large = isLongDistance(train.TypVlaku);
+  const color = delayColor(train);
+  const fi    = isFinnish(train);
+  const large = isLongDistance(train.TypVlaku) || (fi && train.TypVlaku === 'IC');
   const sz    = large ? 15 : 11;
   const angle = train.Angle || 0;
 
@@ -278,7 +295,10 @@ function makeIcon(train) {
     </g>
   </svg>`;
 
-  const dot = `<div style="width:${sz}px;height:${sz}px;background:${color};border:2px solid rgba(255,255,255,.35);border-radius:50%;box-shadow:0 0 5px ${color}88;cursor:pointer;"></div>`;
+  // Finnish trains get a distinctive outline to distinguish from ÖBB trains
+  const dot = fi
+    ? `<div style="width:${sz}px;height:${sz}px;background:${color};border:2.5px solid #1f6feb;border-radius:50%;box-shadow:0 0 6px ${color}99;cursor:pointer;"></div>`
+    : `<div style="width:${sz}px;height:${sz}px;background:${color};border:2px solid rgba(255,255,255,.35);border-radius:50%;box-shadow:0 0 5px ${color}88;cursor:pointer;"></div>`;
 
   return L.divIcon({
     className: '',
@@ -290,10 +310,11 @@ function makeIcon(train) {
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(trains) {
   const active = new Set();
-  let total=0, ontime=0, delayed=0, late=0;
+  let total=0, fi=0, ontime=0, delayed=0, late=0;
 
   trains.forEach(t => {
     total++;
+    if (isFinnish(t)) { fi++; return; } // FI trains don't have delay data
     const d = t.Meska || 0;
     if (d < 5) ontime++; else if (d < 30) delayed++; else late++;
   });
@@ -315,9 +336,8 @@ function render(trains) {
         zIndexOffset: isNight(t.TypVlaku) ? 300 : isLongDistance(t.TypVlaku) ? 200 : 100,
       }).addTo(map);
       m._train = t;
-      m.bindTooltip(`${t.TypVlaku} ${t.CisloVlaku}${t.Popis ? ' ' + t.Popis : ''}`, {
-        direction:'top', offset:[0,-8], className:'train-tooltip',
-      });
+      const tip = `${t.TypVlaku} ${t.CisloVlaku}${t.Popis ? ' · ' + t.Popis : ''}`;
+      m.bindTooltip(tip, { direction:'top', offset:[0,-8], className:'train-tooltip' });
       m.on('click', e => { L.DomEvent.stopPropagation(e); showInfo(m._train); });
       markers[key] = m;
     }
@@ -328,6 +348,7 @@ function render(trains) {
   }
 
   document.getElementById('s-total').textContent   = total;
+  document.getElementById('s-fi').textContent      = fi;
   document.getElementById('s-ontime').textContent  = ontime;
   document.getElementById('s-delayed').textContent = delayed;
   document.getElementById('s-late').textContent    = late;
@@ -343,13 +364,14 @@ async function refresh() {
     const data = await r.json();
     if (data.error) throw new Error(data.error);
 
-    // Keep only trains with confirmed live GPS position
+    // Keep only confirmed live trains
     allTrains = Array.isArray(data.trains) ? data.trains.filter(t => t._isLive) : [];
     render(allTrains);
 
     const ts   = new Date().toLocaleTimeString('en-GB');
+    const src  = data.bySource ? ` · ÖBB ${data.bySource.oebb} + FI ${data.bySource.digitraffic}` : '';
     const errs = data.tileErrors?.length ? ` · ${data.tileErrors.length} tile(s) failed` : '';
-    setStatus(`${allTrains.length} live trains · ${ts}${errs}`,
+    setStatus(`${allTrains.length} live trains${src} · ${ts}${errs}`,
       data.tileErrors?.length ? 'warn' : 'ok');
   } catch (e) {
     setStatus(`Error: ${e.message.slice(0, 60)}`, 'err');
@@ -358,8 +380,8 @@ async function refresh() {
   document.getElementById('refresh-btn').classList.remove('loading');
 }
 
-// ── TRIP DETAIL ───────────────────────────────────────────────────────────────
-async function fetchTripStops(tripId) {
+// ── TRIP DETAIL — ÖBB ─────────────────────────────────────────────────────────
+async function fetchOebbStops(tripId) {
   const r = await fetch(`${PROXY}/trip/${encodeURIComponent(tripId)}`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const data = await r.json();
@@ -394,8 +416,53 @@ async function fetchTripStops(tripId) {
       departureDelay: (depR && depS) ? Math.round((depR - depS) / 1000) : 0,
     };
   });
-
   return { stopovers, line: journey.line };
+}
+
+// ── TRIP DETAIL — Finland ─────────────────────────────────────────────────────
+async function fetchFinnishStops(tripId) {
+  // tripId format: fi-{trainNumber}-{departureDate}
+  const parts = tripId.replace('fi-', '').split('-');
+  const num   = parts[0];
+  const date  = parts.slice(1).join('-'); // YYYY-MM-DD
+
+  const r = await fetch(`${PROXY}/fi-trip/${num}/${date}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const data = await r.json();
+  if (!Array.isArray(data) || !data[0]) throw new Error('No Finnish train data');
+
+  const train = data[0];
+  const stopovers = (train.timeTableRows || [])
+    .filter(row => row.type === 'ARRIVAL' || row.type === 'DEPARTURE')
+    .map(row => {
+      const sched = row.scheduledTime ? new Date(row.scheduledTime) : null;
+      const actual = row.actualTime   ? new Date(row.actualTime)   : null;
+      const delayMs = (actual && sched) ? actual - sched : 0;
+      return {
+        stop: {
+          name: row.stationShortCode,
+          location: null, // Digitraffic location endpoint is separate
+        },
+        arrival:        row.type === 'ARRIVAL'   ? (actual || sched) : null,
+        departure:      row.type === 'DEPARTURE' ? (actual || sched) : null,
+        arrivalDelay:   row.type === 'ARRIVAL'   ? Math.round(delayMs / 1000) : 0,
+        departureDelay: row.type === 'DEPARTURE' ? Math.round(delayMs / 1000) : 0,
+      };
+    });
+
+  // Collapse ARRIVAL + DEPARTURE at same station into one stop
+  const merged = [];
+  for (const s of stopovers) {
+    const prev = merged[merged.length - 1];
+    if (prev && prev.stop.name === s.stop.name) {
+      if (s.arrival)        { prev.arrival      = s.arrival;      prev.arrivalDelay  = s.arrivalDelay; }
+      if (s.departure)      { prev.departure    = s.departure;    prev.departureDelay = s.departureDelay; }
+    } else {
+      merged.push({ ...s });
+    }
+  }
+
+  return { stopovers: merged, line: { name: `${train.trainType} ${train.trainNumber}`, operator: { name: 'VR (Finland)' } } };
 }
 
 // ── STOP LIST ─────────────────────────────────────────────────────────────────
@@ -413,11 +480,11 @@ function renderStopList(stopovers) {
     if (isCur) foundCurrent = true;
 
     const dotCls  = isCur ? 'current' : isPast ? 'past' : 'future';
-    const nameCls = isCur ? 'current' : isPast ? 'past'  : '';
+    const nameCls = isCur ? 'current' : isPast ? 'past' : '';
     const fmt     = d => d ? d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : '';
     const arrStr  = fmt(arr), depStr = fmt(dep);
     const timeStr = arrStr && depStr && arrStr !== depStr ? `${arrStr}–${depStr}` : arrStr || depStr;
-    const delayMin = s.departureDelay ? Math.round(s.departureDelay / 60) : 0;
+    const delayMin = (s.departureDelay || s.arrivalDelay) ? Math.round((s.departureDelay || s.arrivalDelay) / 60) : 0;
     const delayStr = delayMin > 0 ? `<span class="stop-delay"> +${delayMin}'</span>` : '';
 
     return `<div class="stop-row">
@@ -458,8 +525,9 @@ function drawTripRoute(stopovers) {
 
 // ── INFO PANEL ────────────────────────────────────────────────────────────────
 function showInfo(train) {
-  const color = delayColor(train.Meska);
+  const color = delayColor(train);
   const d     = train.Meska || 0;
+  const fi    = isFinnish(train);
 
   document.getElementById('i-no').textContent   = `${train.TypVlaku} ${train.CisloVlaku}`;
   document.getElementById('i-no').style.color   = color;
@@ -474,14 +542,22 @@ function showInfo(train) {
     ? train.Nazov.slice(arrowIdx + 3).trim() : (train.Nazov || '—');
 
   const delEl = document.getElementById('i-delay');
-  delEl.textContent = d === 0 ? 'On time' : `+${d} min`;
-  delEl.style.color = color;
+  if (fi) {
+    delEl.textContent = train.Popis || 'Live GPS';
+    delEl.style.color = '#79c0ff';
+  } else {
+    delEl.textContent = d === 0 ? 'On time' : `+${d} min`;
+    delEl.style.color = color;
+  }
 
   let b = `<span class="badge b-type">${train.TypVlaku}</span>`;
-  b += `<span class="badge b-live">Live GPS</span>`;
-  if (train.MeskaColor === 'green')  b += `<span class="badge b-green">On time</span>`;
-  if (train.MeskaColor === 'orange') b += `<span class="badge b-orange">+${d} min</span>`;
-  if (train.MeskaColor === 'red')    b += `<span class="badge b-red">+${d} min</span>`;
+  if (fi) b += `<span class="badge b-fi">🇫🇮 Digitraffic</span>`;
+  else    b += `<span class="badge b-live">Live GPS</span>`;
+  if (!fi) {
+    if (train.MeskaColor === 'green')  b += `<span class="badge b-green">On time</span>`;
+    if (train.MeskaColor === 'orange') b += `<span class="badge b-orange">+${d} min</span>`;
+    if (train.MeskaColor === 'red')    b += `<span class="badge b-red">+${d} min</span>`;
+  }
   document.getElementById('i-badges').innerHTML = b;
 
   document.getElementById('info').classList.add('show');
@@ -496,32 +572,34 @@ function showInfo(train) {
 
   if (!train._tripId) { loading.textContent = 'No trip ID available'; return; }
 
-  fetchTripStops(train._tripId)
-    .then(trip => {
-      loading.style.display = 'none';
-      renderStopList(trip.stopovers || []);
-      drawTripRoute(trip.stopovers || []);
+  const fetcher = fi ? fetchFinnishStops(train._tripId) : fetchOebbStops(train._tripId);
 
-      const stops = trip.stopovers || [];
-      if (stops.length) {
-        const first = stops[0]?.stop?.name, last = stops[stops.length-1]?.stop?.name;
-        if (first && last) document.getElementById('i-route').textContent = `${first} → ${last}`;
-        const now2 = Date.now();
-        const next = stops.find(s => {
-          const t = s.departure || s.arrival;
-          return t && new Date(t).getTime() > now2;
-        });
-        if (next) document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
-        const op = trip.line?.operator?.name;
-        if (op) document.getElementById('i-op').textContent = op;
-      }
-    })
-    .catch(err => {
-      loading.textContent   = 'Stop list unavailable';
-      loading.style.color   = '#8b949e';
-      loading.style.display = 'block';
-      console.warn('Trip stops error:', err.message);
-    });
+  fetcher.then(trip => {
+    loading.style.display = 'none';
+    renderStopList(trip.stopovers || []);
+    drawTripRoute(trip.stopovers || []);
+
+    const stops = trip.stopovers || [];
+    if (stops.length) {
+      const first = stops[0]?.stop?.name, last = stops[stops.length-1]?.stop?.name;
+      if (first && last && !fi) document.getElementById('i-route').textContent = `${first} → ${last}`;
+      if (fi && first && last)  document.getElementById('i-route').textContent = `${first} → ${last}`;
+      const now2 = Date.now();
+      const next = stops.find(s => {
+        const t = s.departure || s.arrival;
+        return t && new Date(t).getTime() > now2;
+      });
+      if (next && !fi) document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
+      if (next && fi)  document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
+      const op = trip.line?.operator?.name;
+      if (op) document.getElementById('i-op').textContent = op;
+    }
+  }).catch(err => {
+    loading.textContent   = 'Stop list unavailable';
+    loading.style.color   = '#8b949e';
+    loading.style.display = 'block';
+    console.warn('Trip stops error:', err.message);
+  });
 }
 
 function closeInfo() {
