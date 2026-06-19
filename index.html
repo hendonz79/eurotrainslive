@@ -11,7 +11,6 @@
   body { background:#0d1117; color:#e6edf3; font-family:'Segoe UI',system-ui,sans-serif; height:100vh; overflow:hidden; }
   #app { display:flex; flex-direction:column; height:100vh; }
 
-  /* ── Header ── */
   #header {
     background:rgba(13,17,23,0.97); border-bottom:1px solid #21262d;
     padding:8px 16px; display:flex; align-items:center; gap:12px;
@@ -33,7 +32,6 @@
   #refresh-btn:hover { border-color:#58a6ff; color:#58a6ff; }
   #refresh-btn.loading { opacity:.4; pointer-events:none; }
 
-  /* ── Filter bar ── */
   #filters {
     background:rgba(13,17,23,0.95); border-bottom:1px solid #21262d;
     padding:5px 16px; display:flex; align-items:center; gap:8px;
@@ -48,12 +46,10 @@
   .filter-btn.active { background:#1f6feb22; border-color:#1f6feb; color:#58a6ff; }
   .filter-sep { width:1px; height:18px; background:#21262d; margin:0 4px; }
 
-  /* ── Map ── */
   #map-container { flex:1; position:relative; }
   #map { width:100%; height:100%; }
   .leaflet-container { background:#0d1117; }
 
-  /* ── Info panel ── */
   #info {
     position:absolute; top:12px; right:12px; width:320px;
     background:rgba(13,17,23,.97); border:1px solid #21262d;
@@ -68,16 +64,13 @@
   .info-row { display:flex; justify-content:space-between; margin-bottom:4px; }
   .info-key { color:#8b949e; }
   .info-val { font-weight:500; text-align:right; max-width:180px; word-break:break-word; }
-  .info-route { margin-top:8px; padding-top:8px; border-top:1px solid #21262d; font-size:11px; color:#8b949e; line-height:1.5; }
   .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:600; margin:5px 3px 0 0; }
   .b-green  { background:#1a2d1a; color:#3fb950; border:1px solid #238636; }
   .b-orange { background:#2d2110; color:#d29922; border:1px solid #9e6a03; }
   .b-red    { background:#2d1010; color:#f85149; border:1px solid #8b3131; }
   .b-type   { background:#1f2535; color:#79c0ff; border:1px solid #1f6feb; }
   .b-live   { background:#1a2d1a; color:#3fb950; border:1px solid #238636; }
-  .b-warn   { background:#2d1f10; color:#f0883e; border:1px solid #bd561d; }
 
-  /* ── Stop list ── */
   .stop-row { display:flex; gap:6px; align-items:flex-start; padding:3px 0; border-bottom:1px solid #161b22; }
   .stop-row:last-child { border-bottom:none; }
   .stop-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:3px; }
@@ -90,7 +83,6 @@
   .stop-time  { color:#8b949e; font-size:10px; white-space:nowrap; }
   .stop-delay { color:#d29922; font-size:10px; }
 
-  /* ── Legend ── */
   #legend {
     position:absolute; bottom:18px; left:12px;
     background:rgba(13,17,23,.93); border:1px solid #21262d;
@@ -100,7 +92,6 @@
   .leg-row { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
   .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.15); }
 
-  /* ── Status bar ── */
   #status {
     position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
     background:rgba(13,17,23,.91); border:1px solid #21262d;
@@ -111,7 +102,6 @@
   #status.err  { color:#f85149; border-color:#8b3131; }
   #status.warn { color:#d29922; border-color:#9e6a03; }
 
-  /* ── Tooltips / popups ── */
   .train-tooltip {
     background:rgba(13,17,23,0.95) !important; border:1px solid #30363d !important;
     border-radius:5px !important; color:#e6edf3 !important;
@@ -127,7 +117,6 @@
 <body>
 <div id="app">
   <div id="header">
-    <!-- Train icon -->
     <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
       <rect width="28" height="28" rx="6" fill="#1f6feb" opacity=".15"/>
       <rect x="8" y="6" width="12" height="16" rx="3" fill="none" stroke="#58a6ff" stroke-width="1.5"/>
@@ -160,13 +149,12 @@
     </button>
   </div>
 
-  <!-- Quick type filters -->
   <div id="filters">
     <span class="filter-label">Show</span>
-    <button class="filter-btn active" data-filter="all"  onclick="setFilter('all')">All trains</button>
-    <button class="filter-btn"        data-filter="ld"   onclick="setFilter('ld')">Long-distance (EC/IC/RJ/ICE…)</button>
+    <button class="filter-btn active" data-filter="all"   onclick="setFilter('all')">All trains</button>
+    <button class="filter-btn"        data-filter="ld"    onclick="setFilter('ld')">Long-distance (EC/IC/RJ/ICE…)</button>
     <button class="filter-btn"        data-filter="night" onclick="setFilter('night')">Night trains (EN/NJ)</button>
-    <button class="filter-btn"        data-filter="reg"  onclick="setFilter('reg')">Regional only</button>
+    <button class="filter-btn"        data-filter="reg"   onclick="setFilter('reg')">Regional only</button>
     <div class="filter-sep"></div>
     <span class="filter-label">Delay</span>
     <button class="filter-btn active" data-filter="delay-all"     onclick="setDelayFilter('all')">All</button>
@@ -177,7 +165,6 @@
   <div id="map-container">
     <div id="map"></div>
 
-    <!-- Info panel -->
     <div id="info">
       <button class="info-close" onclick="closeInfo()">×</button>
       <div class="info-no" id="i-no"></div>
@@ -195,7 +182,6 @@
       </div>
     </div>
 
-    <!-- Legend -->
     <div id="legend">
       <div class="leg-title">Delay</div>
       <div class="leg-row"><div class="dot" style="background:#3fb950;border-color:#238636"></div> On time (&lt;5 min)</div>
@@ -209,64 +195,48 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIG — point this at your deployed Cloudflare Worker
-// ─────────────────────────────────────────────────────────────────────────────
-// Replace with your worker URL after deploying europe-worker.js
-// e.g. 'https://europe-trains.YOUR-SUBDOMAIN.workers.dev'
-const PROXY = 'https://YOUR-WORKER.workers.dev';
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const PROXY = 'https://eurotrainslive.blair-anderson.workers.dev';
 
-// ─── MAP ──────────────────────────────────────────────────────────────────────
-const map = L.map('map', {
-  center: [50.5, 15.0],
-  zoom: 5,
-  zoomControl: true,
-  preferCanvas: true,  // better performance for many markers
-});
+// ── MAP ───────────────────────────────────────────────────────────────────────
+const map = L.map('map', { center:[50.5,15.0], zoom:5, zoomControl:true, preferCanvas:true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO',
-  subdomains: 'abcd',
-  maxZoom: 19,
+  attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19,
 }).addTo(map);
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
+// ── STATE ─────────────────────────────────────────────────────────────────────
 let markers      = {};
 let activeRoute  = null;
-let allTrains    = [];     // full dataset from last fetch
+let allTrains    = [];
 let activeFilter = 'all';
 let delayFilter  = 'all';
 
-// ─── CLOCK ────────────────────────────────────────────────────────────────────
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
 setInterval(() => {
   document.getElementById('clock').textContent =
     new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }, 1000);
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function setStatus(msg, cls='') {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = cls;
 }
-
 function delayColor(d) {
   if (!d || d < 5) return '#3fb950';
   if (d < 30)      return '#d29922';
   return '#f85149';
 }
-
 function isLongDistance(type) {
-  return /^(EC|IC|ICE|RJ|RJX|TGV|AVE|Frecciarossa|Frecciargento|Frecciabianca|SC|Ex|EX|REX|EN|NJ|CNL|D\b|ARC|LEO|RGJ|Railjet|Eurostar|Thalys|Lyria|OUI|iDTGV|TER\s*200)/i.test(type || '');
+  return /^(EC|IC|ICE|RJ|RJX|TGV|AVE|Frecciarossa|Frecciargento|Frecciabianca|SC|Ex|EX|EN|NJ|CNL|D\b|ARC|LEO|RGJ|Railjet|Eurostar|Thalys|Lyria)/i.test(type || '');
 }
 function isNight(type) {
-  return /^(EN|NJ|CNL|ÖBB Nightjet|Nightjet|Intercités de Nuit)/i.test(type || '');
+  return /^(EN|NJ|CNL|Nightjet|Intercités de Nuit)/i.test(type || '');
 }
-function isRegional(type) {
-  return !isLongDistance(type) && !isNight(type);
-}
-
+function isRegional(type) { return !isLongDistance(type); }
 function trainKey(t) { return t._tripId || `${t.TypVlaku}_${t.CisloVlaku}_${t.Position[0].toFixed(3)}`; }
 
-// ─── FILTERS ─────────────────────────────────────────────────────────────────
+// ── FILTERS ───────────────────────────────────────────────────────────────────
 function setFilter(f) {
   activeFilter = f;
   document.querySelectorAll('[data-filter]').forEach(b => {
@@ -274,7 +244,6 @@ function setFilter(f) {
   });
   render(allTrains);
 }
-
 function setDelayFilter(f) {
   delayFilter = f;
   document.querySelectorAll('[data-filter^="delay-"]').forEach(b => {
@@ -282,23 +251,19 @@ function setDelayFilter(f) {
   });
   render(allTrains);
 }
-
 function passesFilter(t) {
   const type = t.TypVlaku || '';
   const delay = t.Meska || 0;
-
-  if (activeFilter === 'ld'    && !isLongDistance(type) && !isNight(type)) return false;
-  if (activeFilter === 'night' && !isNight(type))                           return false;
-  if (activeFilter === 'reg'   && !isRegional(type))                        return false;
-
+  if (activeFilter === 'ld'    && !isLongDistance(type)) return false;
+  if (activeFilter === 'night' && !isNight(type))        return false;
+  if (activeFilter === 'reg'   && !isRegional(type))     return false;
   if (delayFilter === 'delayed' && delay < 5)  return false;
   if (delayFilter === 'late'    && delay < 30) return false;
-
   return true;
 }
 
-// ─── ICON FACTORY ─────────────────────────────────────────────────────────────
-// All trains are live GPS — single solid dot style, sized by train type
+// ── ICON ──────────────────────────────────────────────────────────────────────
+// All trains are live GPS — solid dot only, sized by type, with direction arrow
 function makeIcon(train) {
   const color = delayColor(train.Meska);
   const large = isLongDistance(train.TypVlaku);
@@ -322,24 +287,21 @@ function makeIcon(train) {
   });
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────────────────────
 function render(trains) {
-  const active  = new Set();
+  const active = new Set();
   let total=0, ontime=0, delayed=0, late=0;
 
-  // Count stats
   trains.forEach(t => {
     total++;
     const d = t.Meska || 0;
     if (d < 5) ontime++; else if (d < 30) delayed++; else late++;
   });
 
-  // Render only filtered subset — also guard against any non-live trains slipping through
-  trains.filter(t => t._isLive !== false).filter(passesFilter).forEach(t => {
+  trains.filter(passesFilter).forEach(t => {
     if (!t.Position?.[0]) return;
     const key = trainKey(t);
     active.add(key);
-
     const latlng = [t.Position[0], t.Position[1]];
     const icon   = makeIcon(t);
 
@@ -350,18 +312,17 @@ function render(trains) {
     } else {
       const m = L.marker(latlng, {
         icon,
-        zIndexOffset: isLongDistance(t.TypVlaku) ? 200 : isNight(t.TypVlaku) ? 150 : 100,
+        zIndexOffset: isNight(t.TypVlaku) ? 300 : isLongDistance(t.TypVlaku) ? 200 : 100,
       }).addTo(map);
       m._train = t;
       m.bindTooltip(`${t.TypVlaku} ${t.CisloVlaku}${t.Popis ? ' ' + t.Popis : ''}`, {
-        direction: 'top', offset: [0, -8], className: 'train-tooltip',
+        direction:'top', offset:[0,-8], className:'train-tooltip',
       });
       m.on('click', e => { L.DomEvent.stopPropagation(e); showInfo(m._train); });
       markers[key] = m;
     }
   });
 
-  // Remove markers for trains no longer present or filtered out
   for (const k of Object.keys(markers)) {
     if (!active.has(k)) { map.removeLayer(markers[k]); delete markers[k]; }
   }
@@ -372,21 +333,21 @@ function render(trains) {
   document.getElementById('s-late').textContent    = late;
 }
 
-// ─── FETCH ────────────────────────────────────────────────────────────────────
+// ── FETCH ─────────────────────────────────────────────────────────────────────
 async function refresh() {
   document.getElementById('refresh-btn').classList.add('loading');
   setStatus('Fetching live positions…', 'warn');
-
   try {
     const r = await fetch(`${PROXY}/all-trains`);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     if (data.error) throw new Error(data.error);
 
+    // Keep only trains with confirmed live GPS position
     allTrains = Array.isArray(data.trains) ? data.trains.filter(t => t._isLive) : [];
     render(allTrains);
 
-    const ts = new Date().toLocaleTimeString('en-GB');
+    const ts   = new Date().toLocaleTimeString('en-GB');
     const errs = data.tileErrors?.length ? ` · ${data.tileErrors.length} tile(s) failed` : '';
     setStatus(`${allTrains.length} live trains · ${ts}${errs}`,
       data.tileErrors?.length ? 'warn' : 'ok');
@@ -394,11 +355,10 @@ async function refresh() {
     setStatus(`Error: ${e.message.slice(0, 60)}`, 'err');
     console.error('Refresh failed:', e);
   }
-
   document.getElementById('refresh-btn').classList.remove('loading');
 }
 
-// ─── TRIP DETAIL ─────────────────────────────────────────────────────────────
+// ── TRIP DETAIL ───────────────────────────────────────────────────────────────
 async function fetchTripStops(tripId) {
   const r = await fetch(`${PROXY}/trip/${encodeURIComponent(tripId)}`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -411,12 +371,9 @@ async function fetchTripStops(tripId) {
   if (!journey?.stopL) throw new Error('No stop list in response');
 
   const today = journey.date;
-
-  // Parse HAFAS time with day-offset prefix support
   const parseT = (d, t) => {
     if (!d || !t) return null;
-    let s = String(t);
-    let dayOff = 0;
+    let s = String(t), dayOff = 0;
     if (s.length > 6) { dayOff = parseInt(s.slice(0, s.length-6), 10) || 0; s = s.slice(s.length-6); }
     s = s.padStart(6, '0');
     const base = new Date(`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${s.slice(0,2)}:${s.slice(2,4)}:${s.slice(4,6)}`);
@@ -424,57 +381,44 @@ async function fetchTripStops(tripId) {
     return base;
   };
 
-  let hasLive = false;
   const stopovers = journey.stopL.map(s => {
-    const loc  = locL[s.locX] || {};
-    const crd  = loc.crd;
-    // Prefer realtime (R) times over scheduled (S) times
-    const arrR = parseT(today, s.aTimeR);
-    const arrS = parseT(today, s.aTimeS);
-    const depR = parseT(today, s.dTimeR);
-    const depS = parseT(today, s.dTimeS);
-    if (s.aTimeR || s.dTimeR) hasLive = true;
-    const arrDelay = (arrR && arrS) ? Math.round((arrR - arrS) / 1000) : 0;
-    const depDelay = (depR && depS) ? Math.round((depR - depS) / 1000) : 0;
+    const loc = locL[s.locX] || {};
+    const crd = loc.crd;
+    const arrR = parseT(today, s.aTimeR), arrS = parseT(today, s.aTimeS);
+    const depR = parseT(today, s.dTimeR), depS = parseT(today, s.dTimeS);
     return {
-      stop: {
-        name: loc.name || '?',
-        location: crd ? { latitude: crd.y / 1e6, longitude: crd.x / 1e6 } : null,
-      },
+      stop: { name: loc.name || '?', location: crd ? { latitude: crd.y/1e6, longitude: crd.x/1e6 } : null },
       arrival:        arrR || arrS || null,
       departure:      depR || depS || null,
-      arrivalDelay:   arrDelay,
-      departureDelay: depDelay,
+      arrivalDelay:   (arrR && arrS) ? Math.round((arrR - arrS) / 1000) : 0,
+      departureDelay: (depR && depS) ? Math.round((depR - depS) / 1000) : 0,
     };
   });
 
-  return { stopovers, hasLive, line: journey.line };
+  return { stopovers, line: journey.line };
 }
 
-// ─── STOP LIST RENDERER ───────────────────────────────────────────────────────
+// ── STOP LIST ─────────────────────────────────────────────────────────────────
 function renderStopList(stopovers) {
   const el  = document.getElementById('i-stops');
   const now = Date.now();
   let foundCurrent = false;
 
   el.innerHTML = stopovers.map(s => {
-    const arr  = s.arrival   ? new Date(s.arrival)   : null;
-    const dep  = s.departure ? new Date(s.departure) : null;
-    const t    = dep || arr;
+    const arr = s.arrival   ? new Date(s.arrival)   : null;
+    const dep = s.departure ? new Date(s.departure) : null;
+    const t   = dep || arr;
     const isPast = t && t.getTime() < now;
     const isCur  = !foundCurrent && arr && arr.getTime() <= now && (!dep || dep.getTime() > now);
     if (isCur) foundCurrent = true;
 
     const dotCls  = isCur ? 'current' : isPast ? 'past' : 'future';
-    const nameCls = isCur ? 'current' : isPast ? 'past' : '';
-
-    const fmt = d => d ? d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : '';
-    const arrStr = fmt(arr), depStr = fmt(dep);
-    const timeStr = arrStr && depStr && arrStr !== depStr
-      ? `${arrStr}–${depStr}` : arrStr || depStr;
-
-    const delayMin  = s.departureDelay ? Math.round(s.departureDelay / 60) : 0;
-    const delayStr  = delayMin > 0 ? `<span class="stop-delay"> +${delayMin}'</span>` : '';
+    const nameCls = isCur ? 'current' : isPast ? 'past'  : '';
+    const fmt     = d => d ? d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : '';
+    const arrStr  = fmt(arr), depStr = fmt(dep);
+    const timeStr = arrStr && depStr && arrStr !== depStr ? `${arrStr}–${depStr}` : arrStr || depStr;
+    const delayMin = s.departureDelay ? Math.round(s.departureDelay / 60) : 0;
+    const delayStr = delayMin > 0 ? `<span class="stop-delay"> +${delayMin}'</span>` : '';
 
     return `<div class="stop-row">
       <div class="stop-dot ${dotCls}"></div>
@@ -488,35 +432,31 @@ function renderStopList(stopovers) {
   if (curEl) setTimeout(() => curEl.scrollIntoView({ block:'center', behavior:'smooth' }), 100);
 }
 
-// ─── ROUTE LINE ───────────────────────────────────────────────────────────────
+// ── ROUTE LINE ────────────────────────────────────────────────────────────────
 function clearRoute() {
   if (activeRoute) activeRoute.forEach(l => { try { map.removeLayer(l); } catch(_){} });
   activeRoute = null;
 }
-
-function drawTripRoute(stopovers, currentPos) {
+function drawTripRoute(stopovers) {
   clearRoute();
-  const now  = Date.now();
+  const now = Date.now();
   const past = [], future = [];
   let crossed = false;
-
   stopovers.forEach(s => {
-    const lat = s.stop?.location?.latitude;
-    const lng = s.stop?.location?.longitude;
+    const lat = s.stop?.location?.latitude, lng = s.stop?.location?.longitude;
     if (!lat) return;
     const t = s.departure ? new Date(s.departure).getTime() : (s.arrival ? new Date(s.arrival).getTime() : null);
     if (!crossed && t && t > now) crossed = true;
     (crossed ? future : past).push([lat, lng]);
     if (!crossed) future.push([lat, lng]);
   });
-
   activeRoute = [
     past.length   > 1 && L.polyline(past,   { color:'#484f58', weight:2.5, opacity:.7 }).addTo(map),
     future.length > 1 && L.polyline(future, { color:'#3fb950', weight:2.5, opacity:.9 }).addTo(map),
   ].filter(Boolean);
 }
 
-// ─── INFO PANEL ───────────────────────────────────────────────────────────────
+// ── INFO PANEL ────────────────────────────────────────────────────────────────
 function showInfo(train) {
   const color = delayColor(train.Meska);
   const d     = train.Meska || 0;
@@ -529,11 +469,9 @@ function showInfo(train) {
   document.getElementById('i-pos').textContent  =
     `${train.Position[0].toFixed(4)}°N, ${train.Position[1].toFixed(4)}°E`;
 
-  // Route: parsed from Nazov "TYPE NO TRAINNAME ORIGIN → DEST"
   const arrowIdx = (train.Nazov||'').indexOf(' → ');
   document.getElementById('i-route').textContent = arrowIdx > -1
-    ? train.Nazov.slice(arrowIdx + 3).trim()
-    : (train.Nazov || '—');
+    ? train.Nazov.slice(arrowIdx + 3).trim() : (train.Nazov || '—');
 
   const delEl = document.getElementById('i-delay');
   delEl.textContent = d === 0 ? 'On time' : `+${d} min`;
@@ -549,7 +487,6 @@ function showInfo(train) {
   document.getElementById('info').classList.add('show');
   if (train.Position) map.panTo(train.Position, { animate:true, duration:.4 });
 
-  // Async stop list fetch
   const wrap    = document.getElementById('i-stops-wrap');
   const loading = document.getElementById('i-stops-loading');
   wrap.style.display    = 'block';
@@ -557,33 +494,24 @@ function showInfo(train) {
   loading.textContent   = 'Loading stops…';
   document.getElementById('i-stops').innerHTML = '';
 
-  if (!train._tripId) {
-    loading.textContent = 'No trip ID available';
-    return;
-  }
+  if (!train._tripId) { loading.textContent = 'No trip ID available'; return; }
 
   fetchTripStops(train._tripId)
     .then(trip => {
       loading.style.display = 'none';
       renderStopList(trip.stopovers || []);
-      drawTripRoute(trip.stopovers || [], train.Position);
+      drawTripRoute(trip.stopovers || []);
 
-      // Enrich route from stop list
       const stops = trip.stopovers || [];
       if (stops.length) {
-        const first = stops[0]?.stop?.name;
-        const last  = stops[stops.length-1]?.stop?.name;
-        if (first && last) {
-          document.getElementById('i-route').textContent = `${first} → ${last}`;
-        }
-        const now = Date.now();
-        const nextStop = stops.find(s => {
+        const first = stops[0]?.stop?.name, last = stops[stops.length-1]?.stop?.name;
+        if (first && last) document.getElementById('i-route').textContent = `${first} → ${last}`;
+        const now2 = Date.now();
+        const next = stops.find(s => {
           const t = s.departure || s.arrival;
-          return t && new Date(t).getTime() > now;
+          return t && new Date(t).getTime() > now2;
         });
-        if (nextStop) {
-          document.getElementById('i-leg').textContent = `→ ${nextStop.stop?.name || '?'}`;
-        }
+        if (next) document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
         const op = trip.line?.operator?.name;
         if (op) document.getElementById('i-op').textContent = op;
       }
@@ -603,7 +531,7 @@ function closeInfo() {
 }
 map.on('click', closeInfo);
 
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
+// ── BOOT ──────────────────────────────────────────────────────────────────────
 refresh();
 setInterval(refresh, 30000);
 </script>
