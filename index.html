@@ -214,7 +214,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Replace with your worker URL after deploying europe-worker.js
 // e.g. 'https://europe-trains.YOUR-SUBDOMAIN.workers.dev'
-const PROXY = 'https://eurotrainslive.blair-anderson.workers.dev/';
+const PROXY = 'https://YOUR-WORKER.workers.dev';
 
 // ─── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', {
@@ -334,8 +334,8 @@ function render(trains) {
     if (d < 5) ontime++; else if (d < 30) delayed++; else late++;
   });
 
-  // Render only filtered subset
-  trains.filter(passesFilter).forEach(t => {
+  // Render only filtered subset — also guard against any non-live trains slipping through
+  trains.filter(t => t._isLive !== false).filter(passesFilter).forEach(t => {
     if (!t.Position?.[0]) return;
     const key = trainKey(t);
     active.add(key);
@@ -383,7 +383,7 @@ async function refresh() {
     const data = await r.json();
     if (data.error) throw new Error(data.error);
 
-    allTrains = data.trains || [];
+    allTrains = Array.isArray(data.trains) ? data.trains.filter(t => t._isLive) : [];
     render(allTrains);
 
     const ts = new Date().toLocaleTimeString('en-GB');
