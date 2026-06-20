@@ -522,9 +522,9 @@ async function fetchNorwayStops(tripId) {
     const depAct   = dep ? new Date(dep) : null;
     return {
       stop: {
-        name: ec.stop?.name || '?',
-        location: (ec.stop?.latitude && ec.stop?.longitude)
-          ? { latitude: ec.stop.latitude, longitude: ec.stop.longitude }
+        name: ec.quay?.name || '?',
+        location: (ec.quay?.latitude && ec.quay?.longitude)
+          ? { latitude: ec.quay.latitude, longitude: ec.quay.longitude }
           : null,
       },
       arrival:        arrAct || null,
@@ -672,7 +672,7 @@ function showInfo(train) {
       if (op) document.getElementById('i-op').textContent = op;
     }
   }).catch(err => {
-    loading.textContent   = `Stop list unavailable: ${err.message.slice(0, 80)}`;
+    loading.textContent   = 'Stop list unavailable';
     loading.style.color   = '#8b949e';
     loading.style.display = 'block';
     console.warn('Trip stops error:', err.message);
