@@ -508,9 +508,10 @@ async function fetchNorwayStops(tripId) {
   const r = await fetch(`${PROXY}/no-trip/${encodeURIComponent(serviceJourneyId)}`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json = await r.json();
+  console.log('Entur response:', JSON.stringify(json).slice(0, 500));
   if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error');
   const sj = json?.data?.serviceJourney;
-  if (!sj) throw new Error('No Entur journey data');
+  if (!sj) throw new Error(`No journey data for ${serviceJourneyId} — response: ${JSON.stringify(json).slice(0,200)}`);
 
   const stopovers = (sj.estimatedCalls || []).map(ec => {
     const arr = ec.actualArrivalTime   || ec.expectedArrivalTime   || ec.aimedArrivalTime;
@@ -671,7 +672,7 @@ function showInfo(train) {
       if (op) document.getElementById('i-op').textContent = op;
     }
   }).catch(err => {
-    loading.textContent   = 'Stop list unavailable';
+    loading.textContent   = `Stop list unavailable: ${err.message.slice(0, 80)}`;
     loading.style.color   = '#8b949e';
     loading.style.display = 'block';
     console.warn('Trip stops error:', err.message);
