@@ -522,7 +522,7 @@ async function fetchNorwayStops(tripId) {
     const depAct   = dep ? new Date(dep) : null;
     return {
       stop: {
-        name: ec.quay?.name || '?',
+        name: ec.quay?.stopPlace?.name || ec.quay?.name || '?',
         location: (ec.quay?.latitude && ec.quay?.longitude)
           ? { latitude: ec.quay.latitude, longitude: ec.quay.longitude }
           : null,
