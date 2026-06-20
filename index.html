@@ -464,13 +464,16 @@ async function fetchFinnishStops(tripId) {
   const stopovers = (train.timeTableRows || [])
     .filter(row => row.type === 'ARRIVAL' || row.type === 'DEPARTURE')
     .map(row => {
-      const sched = row.scheduledTime ? new Date(row.scheduledTime) : null;
-      const actual = row.actualTime   ? new Date(row.actualTime)   : null;
+      const sched  = row.scheduledTime ? new Date(row.scheduledTime) : null;
+      const actual = row.actualTime    ? new Date(row.actualTime)    : null;
       const delayMs = (actual && sched) ? actual - sched : 0;
       return {
         stop: {
-          name: row.stationShortCode,
-          location: null, // Digitraffic location endpoint is separate
+          // Use full station name if returned by enriched worker, else short code
+          name: row.stationName || row.stationShortCode,
+          location: (row.stationLat && row.stationLng)
+            ? { latitude: row.stationLat, longitude: row.stationLng }
+            : null,
         },
         arrival:        row.type === 'ARRIVAL'   ? (actual || sched) : null,
         departure:      row.type === 'DEPARTURE' ? (actual || sched) : null,
@@ -484,8 +487,10 @@ async function fetchFinnishStops(tripId) {
   for (const s of stopovers) {
     const prev = merged[merged.length - 1];
     if (prev && prev.stop.name === s.stop.name) {
-      if (s.arrival)        { prev.arrival      = s.arrival;      prev.arrivalDelay  = s.arrivalDelay; }
-      if (s.departure)      { prev.departure    = s.departure;    prev.departureDelay = s.departureDelay; }
+      if (s.arrival)   { prev.arrival      = s.arrival;   prev.arrivalDelay   = s.arrivalDelay; }
+      if (s.departure) { prev.departure    = s.departure; prev.departureDelay = s.departureDelay; }
+      // Keep location from whichever row has it
+      if (!prev.stop.location && s.stop.location) prev.stop.location = s.stop.location;
     } else {
       merged.push({ ...s });
     }
@@ -494,7 +499,65 @@ async function fetchFinnishStops(tripId) {
   return { stopovers: merged, line: { name: `${train.trainType} ${train.trainNumber}`, operator: { name: 'VR (Finland)' } } };
 }
 
-// ── STOP LIST ─────────────────────────────────────────────────────────────────
+// ── TRIP DETAIL — Norway (Entur Journey Planner) ──────────────────────────────
+async function fetchNorwayStops(tripId) {
+  // tripId format: no-VYG:ServiceJourney:814_444394-R
+  const serviceJourneyId = tripId.replace('no-', '');
+
+  const query = `{
+    serviceJourney(id: "${serviceJourneyId}") {
+      line { publicCode name }
+      estimatedCalls {
+        stop { name lat lon }
+        aimedArrivalTime
+        aimedDepartureTime
+        expectedArrivalTime
+        expectedDepartureTime
+        actualArrivalTime
+        actualDepartureTime
+      }
+    }
+  }`;
+
+  const r = await fetch('https://api.entur.io/journey-planner/v3/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'ET-Client-Name': 'europe-train-map-hendonz79',
+    },
+    body: JSON.stringify({ query }),
+  });
+  if (!r.ok) throw new Error(`Entur GraphQL HTTP ${r.status}`);
+  const json = await r.json();
+  const sj = json?.data?.serviceJourney;
+  if (!sj) throw new Error('No Entur journey data');
+
+  const stopovers = (sj.estimatedCalls || []).map(ec => {
+    const arr = ec.actualArrivalTime   || ec.expectedArrivalTime   || ec.aimedArrivalTime;
+    const dep = ec.actualDepartureTime || ec.expectedDepartureTime || ec.aimedDepartureTime;
+    const arrSched = ec.aimedArrivalTime   ? new Date(ec.aimedArrivalTime)   : null;
+    const depSched = ec.aimedDepartureTime ? new Date(ec.aimedDepartureTime) : null;
+    const arrAct   = arr ? new Date(arr) : null;
+    const depAct   = dep ? new Date(dep) : null;
+    return {
+      stop: {
+        name: ec.stop?.name || '?',
+        location: (ec.stop?.lat && ec.stop?.lon)
+          ? { latitude: ec.stop.lat, longitude: ec.stop.lon }
+          : null,
+      },
+      arrival:        arrAct || null,
+      departure:      depAct || null,
+      arrivalDelay:   (arrAct && arrSched) ? Math.round((arrAct - arrSched) / 1000) : 0,
+      departureDelay: (depAct && depSched) ? Math.round((depAct - depSched) / 1000) : 0,
+    };
+  });
+
+  return {
+    stopovers,
+    line: { name: sj.line?.publicCode || '', operator: { name: 'Vy (Norway)' } },
+  };
+}
 function renderStopList(stopovers) {
   const el  = document.getElementById('i-stops');
   const now = Date.now();
@@ -560,14 +623,18 @@ function showInfo(train) {
   const no    = isNorwegian(train);
   document.getElementById('i-no').style.color   = color;
   document.getElementById('i-name').textContent = train.NazovVlaku || '—';
-  document.getElementById('i-leg').textContent  = train.Popis || '—';
   document.getElementById('i-op').textContent   = train.Dopravca || '—';
   document.getElementById('i-pos').textContent  =
     `${train.Position[0].toFixed(4)}°N, ${train.Position[1].toFixed(4)}°E`;
 
   const arrowIdx = (train.Nazov||'').indexOf(' → ');
-  document.getElementById('i-route').textContent = arrowIdx > -1
-    ? train.Nazov.slice(arrowIdx + 3).trim() : (train.Nazov || '—');
+  document.getElementById('i-route').textContent = no
+    ? 'Loading…'
+    : arrowIdx > -1 ? train.Nazov.slice(arrowIdx + 3).trim() : (train.Nazov || '—');
+
+  document.getElementById('i-leg').textContent = no
+    ? train.Popis || 'Live GPS'
+    : (train.Popis || '—');
 
   const delEl = document.getElementById('i-delay');
   if (fi || no) {
@@ -601,14 +668,9 @@ function showInfo(train) {
 
   if (!train._tripId) { loading.textContent = 'No trip ID available'; return; }
 
-  // Norway (Entur) doesn't have a simple per-trip stop endpoint we can call
-  if (no) {
-    loading.textContent = 'Stop list not available for Norwegian trains yet';
-    loading.style.color = '#8b949e';
-    return;
-  }
-
-  const fetcher = fi ? fetchFinnishStops(train._tripId) : fetchOebbStops(train._tripId);
+  const fetcher = fi  ? fetchFinnishStops(train._tripId)
+                : no  ? fetchNorwayStops(train._tripId)
+                :       fetchOebbStops(train._tripId);
 
   fetcher.then(trip => {
     loading.style.display = 'none';
@@ -618,15 +680,13 @@ function showInfo(train) {
     const stops = trip.stopovers || [];
     if (stops.length) {
       const first = stops[0]?.stop?.name, last = stops[stops.length-1]?.stop?.name;
-      if (first && last && !fi) document.getElementById('i-route').textContent = `${first} → ${last}`;
-      if (fi && first && last)  document.getElementById('i-route').textContent = `${first} → ${last}`;
+      if (first && last) document.getElementById('i-route').textContent = `${first} → ${last}`;
       const now2 = Date.now();
       const next = stops.find(s => {
         const t = s.departure || s.arrival;
         return t && new Date(t).getTime() > now2;
       });
-      if (next && !fi) document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
-      if (next && fi)  document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
+      if (next) document.getElementById('i-leg').textContent = `→ ${next.stop?.name || '?'}`;
       const op = trip.line?.operator?.name;
       if (op) document.getElementById('i-op').textContent = op;
     }
