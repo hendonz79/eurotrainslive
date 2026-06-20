@@ -504,31 +504,11 @@ async function fetchNorwayStops(tripId) {
   // tripId format: no-VYG:ServiceJourney:814_444394-R
   const serviceJourneyId = tripId.replace('no-', '');
 
-  const query = `{
-    serviceJourney(id: "${serviceJourneyId}") {
-      line { publicCode name }
-      estimatedCalls {
-        stop { name lat lon }
-        aimedArrivalTime
-        aimedDepartureTime
-        expectedArrivalTime
-        expectedDepartureTime
-        actualArrivalTime
-        actualDepartureTime
-      }
-    }
-  }`;
-
-  const r = await fetch('https://api.entur.io/journey-planner/v3/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'ET-Client-Name': 'europe-train-map-hendonz79',
-    },
-    body: JSON.stringify({ query }),
-  });
-  if (!r.ok) throw new Error(`Entur GraphQL HTTP ${r.status}`);
+  // Call via our worker proxy to avoid CORS issues with direct Entur GraphQL calls
+  const r = await fetch(`${PROXY}/no-trip/${encodeURIComponent(serviceJourneyId)}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json = await r.json();
+  if (json.errors) throw new Error(json.errors[0]?.message || 'GraphQL error');
   const sj = json?.data?.serviceJourney;
   if (!sj) throw new Error('No Entur journey data');
 
@@ -542,8 +522,8 @@ async function fetchNorwayStops(tripId) {
     return {
       stop: {
         name: ec.stop?.name || '?',
-        location: (ec.stop?.lat && ec.stop?.lon)
-          ? { latitude: ec.stop.lat, longitude: ec.stop.lon }
+        location: (ec.stop?.latitude && ec.stop?.longitude)
+          ? { latitude: ec.stop.latitude, longitude: ec.stop.longitude }
           : null,
       },
       arrival:        arrAct || null,
